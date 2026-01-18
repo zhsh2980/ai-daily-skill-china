@@ -48,8 +48,8 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
         run: |
-          echo "使用 Agent SDK 生成简报..."
-          python scripts/use_agent_sdk.py
+          echo "正在生成每日科技简报..."
+          python scripts/tech_digest.py
 
       - name: Generate HTML index
         run: python scripts/generate_html.py
