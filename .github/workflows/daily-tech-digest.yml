@@ -12,6 +12,14 @@ name: Daily Tech Digest
 # 2. ANTHROPIC_BASE_URL (可选)
 #    - API 端点地址，默认使用官方 Anthropic API
 #    - 如使用智谱 BigModel，设置为: https://open.bigmodel.cn/api/anthropic
+#
+# 3. DINGTALK_WEBHOOK_URL (可选)
+#    - 钉钉机器人 Webhook 地址
+#    - 获取方式: 钉钉群 → 群设置 → 智能群助手 → 添加机器人
+#
+# 4. DINGTALK_SECRET (可选)
+#    - 钉钉机器人加签密钥，以 SEC 开头
+#    - 创建机器人时选择"加签"安全设置
 # ============================
 
 on:
@@ -47,6 +55,11 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+          # 钉钉推送配置
+          DINGTALK_WEBHOOK_URL: ${{ secrets.DINGTALK_WEBHOOK_URL }}
+          DINGTALK_SECRET: ${{ secrets.DINGTALK_SECRET }}
+          ENABLE_DINGTALK: "true"
+          GITHUB_PAGES_URL: "https://zhsh2980.github.io/ai-daily-skill-china"
         run: |
           echo "正在生成每日科技简报..."
           python scripts/tech_digest.py

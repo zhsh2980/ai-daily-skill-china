@@ -286,6 +286,14 @@ def main():
     # 保存
     save_digest(digest, config, today)
 
+    # 发送钉钉通知
+    print("\n[5/5] 正在发送钉钉通知...")
+    try:
+        from dingtalk_notifier import send_dingtalk_digest
+        send_dingtalk_digest(digest, today)
+    except Exception as e:
+        print(f"[警告] 钉钉通知发送失败: {e}")
+
     print("\n" + "=" * 50)
     print("生成完成!")
     print("=" * 50)
