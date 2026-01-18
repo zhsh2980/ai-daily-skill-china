@@ -1,0 +1,91 @@
+name: Daily Tech Digest
+
+# ============================
+# Secrets 配置说明
+# ============================
+# 在 GitHub 仓库设置中添加以下 Secrets:
+#
+# 1. ANTHROPIC_API_KEY
+#    - Claude API Key 或兼容服务的 API Key
+#    - 获取地址: https://console.anthropic.com/
+#
+# 2. ANTHROPIC_BASE_URL (可选)
+#    - API 端点地址，默认使用官方 Anthropic API
+#    - 如使用智谱 BigModel，设置为: https://open.bigmodel.cn/api/anthropic
+# ============================
+
+on:
+  schedule:
+    # 每天 UTC 22:00 运行 = 北京时间 6:00
+    - cron: '0 22 * * *'
+  workflow_dispatch:
+
+jobs:
+  generate-digest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate digest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+        run: |
+          echo "使用 Agent SDK 生成简报..."
+          python scripts/use_agent_sdk.py
+
+      - name: Generate HTML index
+        run: python scripts/generate_html.py
+
+      - name: Generate GitHub Pages
+        run: python scripts/generate_page.py
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          # 检查是否有变更
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "没有新的简报生成"
+            exit 0
+          fi
+
+          # 获取日期
+          DATE=$(TZ='Asia/Shanghai' date +%Y-%m-%d)
+
+          # 提交变更
+          git add digests/ index.html
+          git commit -m "📰 Daily digest: ${DATE}"
+          git push
+
+      # Telegram 通知（暂未启用）
+      # - name: Send Telegram notification
+      #   if: success()
+      #   env:
+      #     TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      #     TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      #   run: |
+      #     DATE=$(TZ='Asia/Shanghai' date +%Y-%m-%d)
+      #     MESSAGE="📰 每日科技简报已更新: ${DATE}"
+      #     curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+      #       -d chat_id="${TELEGRAM_CHAT_ID}" \
+      #       -d text="${MESSAGE}" \
+      #       -d parse_mode="Markdown"
